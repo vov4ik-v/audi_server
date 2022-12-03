@@ -37,7 +37,6 @@ public class CarService {
         carDto.setPrice(car.getPrice());
         carDto.setModelName(car.getModelName());
         carDto.setSideViewImageURL(car.getSideViewImageURL());
-        carDto.setSmallImageUrl(car.getSmallImageUrl());
         carDto.setTopViewImageUrl(car.getTopViewImageUrl());
         carDto.setTrunkVolume(car.getTrunkVolume());
         carDto.setWheelBase(car.getWheelBase());
@@ -64,7 +63,6 @@ public class CarService {
         car.setPrice(carDto.getPrice());
         car.setModelName(carDto.getModelName());
         car.setSideViewImageURL(carDto.getSideViewImageURL());
-        car.setSmallImageUrl(carDto.getSmallImageUrl());
         car.setTopViewImageUrl(carDto.getTopViewImageUrl());
         car.setTrunkVolume(carDto.getTrunkVolume());
         car.setWheelBase(carDto.getWheelBase());

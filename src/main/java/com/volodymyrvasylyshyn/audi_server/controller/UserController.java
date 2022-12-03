@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.security.Principal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("api/user")
@@ -46,6 +47,11 @@ public class UserController {
         UserDTO userDTO = userFacade.userToUserDTO(user);
         return new ResponseEntity<>(userDTO, HttpStatus.OK);
     }
+    @GetMapping("/allUser")
+    public ResponseEntity<List<UserDTO>> getAllUsers(){
+        List<UserDTO> usersDTO = userService.getAllUser().stream().map(userFacade::userToUserDTO).collect(Collectors.toList());
+        return new ResponseEntity<>(usersDTO, HttpStatus.OK);
+    }
 
 
     @GetMapping("/{username}")
@@ -72,23 +78,29 @@ public class UserController {
         UserDTO userUpdated = userFacade.userToUserDTO(user);
         return new ResponseEntity<>(userUpdated, HttpStatus.OK);
     }
-//    @PostMapping("/addToFriends")
-//    public ResponseEntity<MessageResponse> addUserToFriends(@RequestBody Long userId, Principal principal){
-////        ResponseEntity<Object> errors = responseErrorValidation.mapValidationService(bindingResult);
-////        if (!ObjectUtils.isEmpty(errors)) return errors;
-//        userService.addUserToFriends(principal,userId);
-//        return new ResponseEntity<>(new MessageResponse("User with id: " + userId + " added to friends success"), HttpStatus.OK);
-//    }
-//    @GetMapping("/allFriends")
-//    public ResponseEntity<List<User>> allFriends(Principal principal){
-//        List<User> friends = userService.getAllFriends(principal);
-//        return new ResponseEntity<>(friends, HttpStatus.OK);
-//    }
-//    @DeleteMapping("/deleteFriend/{userId}")
-//    public ResponseEntity<MessageResponse> allFriends(@PathVariable Long userId, Principal principal){
-//        userService.deleteUserFromFriends(principal,userId);
-//        return new ResponseEntity<>(new MessageResponse("User with id: " + userId + " deleted to friends success"), HttpStatus.OK);
-//    }
+    @PostMapping("/forgot")
+    public ResponseEntity<?> forgotPassword(@RequestParam String email){
+         userService.forgotPassword(email);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+    @PostMapping("/forgot/setNewPassword")
+    public ResponseEntity<?> setNewPassword(@RequestParam String resetToken,@RequestParam String password){
+        User user = userService.getByResetToken(resetToken);
+         userService.updatePassword(user,password);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+    @PostMapping("/changePassword")
+    public ResponseEntity<MessageResponse> changePassword(@RequestParam("oldPassword") String oldPassword,@RequestParam("newPassword") String newPassword,Principal principal){
+        boolean isChange = userService.changePassword(oldPassword,newPassword,principal);
+        if (isChange){
+            return new ResponseEntity<>(new MessageResponse("Password changed success"),HttpStatus.OK);
+        }
+        else{
+            return new ResponseEntity<>(new MessageResponse("Password not changed"),HttpStatus.BAD_REQUEST);
+        }
+
+    }
+
 
 }
 

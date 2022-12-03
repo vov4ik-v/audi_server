@@ -29,4 +29,12 @@ public class ExceptionControllerAdvice {
     public final ResponseEntity<String> handlerCustomException(NewsNotFoundException exception) {
         return new ResponseEntity<>(exception.getMessage(), HttpStatus.BAD_REQUEST);
     }
+    @ExceptionHandler(value = ResourceNotFoundException.class)
+    public final ResponseEntity<String> handlerCustomException(ResourceNotFoundException exception) {
+        return new ResponseEntity<>(exception.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler(value = EmailNotFoundExeption.class)
+    public final ResponseEntity<String> handlerCustomException(EmailNotFoundExeption exception) {
+        return new ResponseEntity<>(exception.getMessage(), HttpStatus.BAD_REQUEST);
+    }
 }

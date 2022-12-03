@@ -30,6 +30,9 @@ public class User implements UserDetails {
     private String bio;
     @Column(length = 3000)
     private String password;
+    @Column(columnDefinition = "text",unique = true)
+    private String resetPasswordToken;
+    private Boolean isEnable;
 
     @ElementCollection(targetClass = ERole.class)
     @CollectionTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id"))

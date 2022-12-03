@@ -1,5 +1,6 @@
 package com.volodymyrvasylyshyn.audi_server.service;
 
+import com.volodymyrvasylyshyn.audi_server.exeptions.EmailNotFoundExeption;
 import com.volodymyrvasylyshyn.audi_server.model.Email;
 import com.volodymyrvasylyshyn.audi_server.repository.EmailRepository;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,11 @@ public class EmailService {
 
     public List<Email> getAll() {
         return emailRepository.findAll();
+    }
+    public void deleteEmail(Integer id){
+        Email email = emailRepository.findById(id).orElseThrow(() ->new EmailNotFoundExeption("email not found"));
+        emailRepository.delete(email);
+
     }
 
     public List<String> getAllEmails(List<Email> emailList) {

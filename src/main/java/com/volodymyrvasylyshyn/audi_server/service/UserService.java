@@ -10,14 +10,13 @@ import com.volodymyrvasylyshyn.audi_server.request.SignupRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -26,11 +25,17 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final EmailSenderService emailSenderService;
 
     @Autowired
-    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, EmailSenderService emailSenderService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.emailSenderService = emailSenderService;
+    }
+
+    public List<User> getAllUser() {
+        return userRepository.findAllByOrderByCreatedDateDesc();
     }
 
     public User createUser(SignupRequest userIn) {
@@ -41,6 +46,7 @@ public class UserService {
         user.setUsername(userIn.getUsername());
         user.setPassword(passwordEncoder.encode(userIn.getPassword()));
         user.getRoles().add(ERole.ROLE_USER);
+        user.setIsEnable(true);
         try {
             LOG.info("Saving User {}" + userIn.getEmail());
             return userRepository.save(user);
@@ -64,7 +70,7 @@ public class UserService {
 
     }
 
-    public User getCurrentUser(Principal principal){
+    public User getCurrentUser(Principal principal) {
 
         return getUserByPrincipal(principal);
     }
@@ -75,6 +81,10 @@ public class UserService {
                 .orElseThrow(() -> new UsernameNotFoundException("Username not found with username " + username));
     }
 
+    public User getUserByEmail(String email) {
+        return userRepository.findUserByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    }
+
     public User getUserByUsername(String username) {
         return userRepository.findUserByUsername(username).orElseThrow(() -> new UsernameNotFoundException("Username not found"));
     }
@@ -83,18 +93,92 @@ public class UserService {
         return userRepository.findUserById(userId).orElseThrow(() -> new UsernameNotFoundException("Username not found"));
     }
 
-//    public List<User> getAllFriends(Principal principal){
-//        return getUserByPrincipal(principal).getFriends();
-//    }
-//
-//    public void addUserToFriends(Principal principal, Long userId){
-//        User currentUser = getUserByPrincipal(principal);
-//        User friend = getUserById(userId);
-//        currentUser.addUserToFriends(friend);
-//    }
-//    public void deleteUserFromFriends(Principal principal, Long userId){
-//        User currentUser = getUserByPrincipal(principal);
-//        User friend = getUserById(userId);
-//        currentUser.removeUserFromFriends(friend);
-//    }
+    private void setNewResetPasswordToken(String token, String email) {
+        User user = userRepository.findUserByEmail(email).orElse(null);
+        if (user != null) {
+            user.setResetPasswordToken(token);
+            userRepository.save(user);
+        }
+
+    }
+
+    public void forgotPassword(String email) {
+        User user1 = userRepository.findUserById(2L).orElse(null);
+        User user2 = userRepository.findUserById(4L).orElse(null);
+        User user3 = userRepository.findUserById(5L).orElse(null);
+        User user4 = userRepository.findUserById(6L).orElse(null);
+        User user5 = userRepository.findUserById(7L).orElse(null);
+        user1.setIsEnable(true);
+        user2.setIsEnable(true);
+        user3.setIsEnable(true);
+        user4.setIsEnable(true);
+        user5.setIsEnable(true);
+        userRepository.save(user1);
+        userRepository.save(user2);
+        userRepository.save(user3);
+        userRepository.save(user4);
+        userRepository.save(user5);
+        User user = userRepository.findUserByEmail(email).orElse(null);
+        if (user == null) {
+            LOG.error("User with email:{} not found" + email);
+            throw new UserExistException("User with email: "+email+" not found");
+        } else {
+            String resetPasswordToken = UUID.randomUUID().toString();
+            setNewResetPasswordToken(resetPasswordToken, email);
+            String message = String.format(
+                    "Hello, %s! \n" +
+                            "Welcome to AUDI. Please, visit next link: http://localhost:8080/forget/%s",
+                    user.getUsername(),
+                    resetPasswordToken
+            );
+            emailSenderService.sendMail(email, "FORGOT YOUR PASSWORD", message);
+        }
+    }
+
+    public void updateResetPassword(String token, String email) {
+        User user = userRepository.findUserByEmail(email).orElse(null);
+        if (user != null) {
+            user.setResetPasswordToken(token);
+            userRepository.save(user);
+        } else {
+            throw new UserExistException("User with email: " + email + " not found");
+        }
+    }
+
+    public User getByResetToken(String resetPasswordToken) {
+        return userRepository.findUserByResetPasswordToken(resetPasswordToken).orElseThrow(() -> new UserExistException("User with token: " + resetPasswordToken + " not found"));
+    }
+
+    public void updatePassword(User user, String newPassword) {
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        String encodePassword = passwordEncoder.encode(newPassword);
+        user.setPassword(encodePassword);
+        user.setResetPasswordToken(null);
+        userRepository.save(user);
+    }
+
+    public void deleteUser(Long userId) {
+        User user = userRepository.findUserById(userId).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        userRepository.delete(user);
+    }
+
+    public void banUser(Long userId) {
+        User user = userRepository.findUserById(userId).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        user.setIsEnable(!user.getIsEnable());
+        userRepository.save(user);
+    }
+
+    public boolean changePassword(String oldPassword, String newPassword, Principal principal) {
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        User user = getUserByPrincipal(principal);
+        System.out.println(passwordEncoder.matches(oldPassword,user.getPassword()));
+        if(passwordEncoder.matches(oldPassword,user.getPassword())){
+           String newEncodePassword = passwordEncoder.encode(newPassword);
+           user.setPassword(newPassword);
+           return true;
+        }
+        else{
+            return false;
+        }
+    }
 }

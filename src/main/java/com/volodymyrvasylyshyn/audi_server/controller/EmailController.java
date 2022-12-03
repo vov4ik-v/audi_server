@@ -2,6 +2,8 @@ package com.volodymyrvasylyshyn.audi_server.controller;
 
 import com.volodymyrvasylyshyn.audi_server.common.ApiResponse;
 import com.volodymyrvasylyshyn.audi_server.model.Email;
+import com.volodymyrvasylyshyn.audi_server.payload.MessageResponse;
+import com.volodymyrvasylyshyn.audi_server.request.EmailMessageRequest;
 import com.volodymyrvasylyshyn.audi_server.service.EmailSenderService;
 import com.volodymyrvasylyshyn.audi_server.service.EmailService;
 import org.slf4j.Logger;
@@ -29,49 +31,71 @@ public class EmailController {
         this.emailService = emailService;
         this.emailSenderService = emailSenderService;
     }
+
     @PostMapping("/addEmail")
-    public ResponseEntity<ApiResponse> addEmail(@RequestBody Email email){
+    public ResponseEntity<ApiResponse> addEmail(@RequestBody Email email) {
         emailService.addEmail(email);
         String senderEmail = email.getEmail();
         try {
-            emailSenderService.sendMail(senderEmail,"WELCOME","You are subscribe to are our newsletter");
-        }
-        catch (MailException e) {
+            emailSenderService.sendMail(senderEmail, "WELCOME", "You are subscribe to are our newsletter");
+        } catch (MailException e) {
             LOG.error("Error while sending out email ..{}", (Object) e.getStackTrace());
         }
-        return new ResponseEntity<>(new ApiResponse(true,"Email added success"), HttpStatus.CREATED);
+        return new ResponseEntity<>(new ApiResponse(true, "Email added success"), HttpStatus.CREATED);
     }
 
     @GetMapping("/getEmails")
-    public ResponseEntity<List<Email>> getAll(){
+    public ResponseEntity<List<Email>> getAll() {
         List<Email> emails = emailService.getAll();
         return new ResponseEntity<>(emails, HttpStatus.OK);
     }
+
     @GetMapping("/sentAllEmails")
-    public @ResponseBody ResponseEntity sendAllEmail() {
+    public @ResponseBody
+    ResponseEntity sendAllEmail() {
         List<String> emails = emailService.getAllEmails(emailService.getAll());
         try {
-            emailSenderService.sendMailToManyPerson(emails,"WELCOME","This is a welcome email for all emails!!");
+            emailSenderService.sendMailToManyPerson(emails, "WELCOME", "This is a welcome email for all emails!!");
         } catch (MessagingException e) {
             LOG.error("Error while sending out email ..{}", (Object) e.getStackTrace());
             return new ResponseEntity<>("Unable to send email", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>("Please check your inbox",HttpStatus.OK);
+        return new ResponseEntity<>("Please check your inbox", HttpStatus.OK);
 
 
     }
 
-    @GetMapping("/sentEmail/{user-email}")
-    public @ResponseBody ResponseEntity sendSimpleEmail(@PathVariable("user-email") String email) throws MessagingException {
+    @GetMapping("/sentWelcomeMessage/{user-email}")
+    public @ResponseBody
+    ResponseEntity sendSimpleEmail(@PathVariable("user-email") String email) throws MessagingException {
         try {
-            emailSenderService.sendMail(email,"WELCOME","This is a welcome email for you!!");
-        }
-        catch (MailException e){
+            emailSenderService.sendMail(email, "WELCOME", "This is a welcome email for you!!");
+        } catch (MailException e) {
             LOG.error("Error while sending out email ..{}", (Object) e.getStackTrace());
             return new ResponseEntity<>("Unable to send email", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>("Please check your inbox",HttpStatus.OK);
+        return new ResponseEntity<>("Please check your inbox", HttpStatus.OK);
 
 
     }
+
+    @DeleteMapping("/deleteEmail/{emailId}")
+    public ResponseEntity<MessageResponse> deleteEmail(@PathVariable("emailId") Integer emailId) {
+        emailService.deleteEmail(emailId);
+        return new ResponseEntity<>(new MessageResponse("Email deleted success"), HttpStatus.OK);
+    }
+
+    @PutMapping("/sentMessage/{user-email}")
+    public ResponseEntity<MessageResponse> sentMessage(@PathVariable("user-email") String email, @RequestBody EmailMessageRequest messageRequest){
+        try {
+            emailSenderService.sendMail(email, messageRequest.getSubject(), messageRequest.getMessage());
+        }
+        catch (MailException e){
+            LOG.error("Error while sending out email ..{}", (Object) e.getStackTrace());
+            return new ResponseEntity<>(new MessageResponse("Unable to send email" + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ResponseEntity<>(new MessageResponse("Message sent success"), HttpStatus.OK);
+
+    }
+
 }

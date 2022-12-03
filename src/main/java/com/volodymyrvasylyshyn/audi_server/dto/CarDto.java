@@ -13,7 +13,6 @@ public class CarDto {
     private String modelName;
     private double price;
     private String imageURL;
-    private String smallImageUrl;
     private String descriptionImageUrl;
     private String topViewImageUrl;
     private String crashTestMovie;
