@@ -15,7 +15,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -45,7 +47,7 @@ public class UserService {
         user.setLastname(userIn.getLastname());
         user.setUsername(userIn.getUsername());
         user.setPassword(passwordEncoder.encode(userIn.getPassword()));
-        user.getRoles().add(ERole.ROLE_USER);
+        user.getRoles().add(ERole.USER);
         user.setIsEnable(true);
         try {
             LOG.info("Saving User {}" + userIn.getEmail());
@@ -77,8 +79,9 @@ public class UserService {
 
     private User getUserByPrincipal(Principal principal) {
         String username = principal.getName();
-        return userRepository.findUserByUsername(username)
+        User user =  userRepository.findUserByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Username not found with username " + username));
+        return user;
     }
 
     public User getUserByEmail(String email) {

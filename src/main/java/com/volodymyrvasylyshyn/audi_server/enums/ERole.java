@@ -1,6 +1,14 @@
 package com.volodymyrvasylyshyn.audi_server.enums;
 
-public enum ERole {
-    ROLE_USER,
-    ROLE_ADMIN
+import org.springframework.security.core.GrantedAuthority;
+
+public enum ERole implements GrantedAuthority {
+
+    USER,
+    ADMIN;
+
+    @Override
+    public String getAuthority() {
+        return name();
+    }
 }
