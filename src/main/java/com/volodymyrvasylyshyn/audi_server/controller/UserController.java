@@ -61,13 +61,13 @@ public class UserController {
         return new ResponseEntity<>(userDTO, HttpStatus.OK);
 
     }
-//    @GetMapping("/{id}")
-//    public ResponseEntity<UserDTO> getUserById(@PathVariable("id") Long userId ){
-//        User user = userService.getUserById(userId);
-//        UserDTO userDTO = userFacade.userToUserDTO(user);
-//        return new ResponseEntity<>(userDTO, HttpStatus.OK);
-//
-//    }
+    @GetMapping("/byId/{id}")
+    public ResponseEntity<UserDTO> getUserById(@PathVariable("id") Long userId ){
+        User user = userService.getUserById(userId);
+        UserDTO userDTO = userFacade.userToUserDTO(user);
+        return new ResponseEntity<>(userDTO, HttpStatus.OK);
+
+    }
 
     @PostMapping("/update")
     public ResponseEntity<Object> updateUser(@Valid @RequestBody UserDTO userDTO, BindingResult bindingResult, Principal principal){

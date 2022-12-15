@@ -10,7 +10,7 @@ import java.util.List;
 @Repository
 public interface FriendRepository extends JpaRepository<Friend,Integer> {
     boolean existsByFirstUserAndSecondUser(User first, User second);
-        Friend findByFirstUserAndSecondUser(User first, User second);
+    Friend findByFirstUserAndSecondUser(User first, User second);
     List<Friend> findByFirstUser(User user);
     List<Friend> findBySecondUser(User user);
 }

@@ -19,43 +19,52 @@ import java.util.stream.Collectors;
 @CrossOrigin
 @RequestMapping("/api")
 public class FriendController {
-    private final UserRepository userRepository;
     private final FriendService friendService;
 
      private  final UserFacade userFacade;
 
-    public FriendController(UserRepository userRepository, FriendService friendService, UserFacade userFacade) {
-        this.userRepository = userRepository;
-
+    public FriendController( FriendService friendService, UserFacade userFacade) {
         this.friendService = friendService;
         this.userFacade = userFacade;
     }
 
     @PostMapping("addFriend")
     public ResponseEntity<?> addUser(@RequestParam("friendId")String friendId, Principal principal) throws NullPointerException{
-        User user = getUserByPrincipal(principal);
-        UserDTO currentUser = userFacade.userToUserDTO(user);
-        friendService.saveFriend(currentUser,Integer.parseInt(friendId));
+        friendService.saveFriend(principal,Integer.parseInt(friendId));
         return ResponseEntity.ok("Friend added successfully");
     }
 
-    @GetMapping("listFriends")
-    public ResponseEntity<List<UserDTO>> getFriends(Principal principal) {
-        List<User> myFriends = friendService.getFriends(principal);
+    @GetMapping("listFollowing/{username}")
+    public ResponseEntity<List<UserDTO>> getFollowing(@PathVariable("username") String username) {
+        List<User> myFriends = friendService.getFollowing(username);
         List<UserDTO> userDTO = myFriends.stream().map(userFacade::userToUserDTO).collect(Collectors.toList());
         return new ResponseEntity<>(userDTO, HttpStatus.OK);
     }
+    @GetMapping("listFollowers/{username}")
+    public ResponseEntity<List<UserDTO>> getFollowers(@PathVariable("username") String username) {
+        List<User> myFriends = friendService.getFollowers(username);
+        List<UserDTO> userDTO = myFriends.stream().map(userFacade::userToUserDTO).collect(Collectors.toList());
+        return new ResponseEntity<>(userDTO, HttpStatus.OK);
+    }
+    @GetMapping("countFollowing/{username}")
+    public ResponseEntity<Integer> getCountFollowing(@PathVariable("username") String username){
+        Integer countFollowing = friendService.getCountFollowing(username);
+        return new ResponseEntity<>(countFollowing,HttpStatus.OK);
 
-    @PostMapping("isFriend")
-    public ResponseEntity<Boolean> checkToFriends(@RequestParam("friendId")String friendId, Principal principal){
-        Boolean isFriend = friendService.checkToFriends(friendId,principal);
+    }
+    @GetMapping("countFollowers/{username}")
+    public ResponseEntity<Integer> getCountFollowers(@PathVariable("username") String username){
+        Integer countFollowers = friendService.getCountFollowers(username);
+        return new ResponseEntity<>(countFollowers,HttpStatus.OK);
+
+    }
+
+
+    @GetMapping("isFriend/{currentUserUsername}/{friendId}")
+    public ResponseEntity<Boolean> checkToFriends(@PathVariable("friendId")String friendId, @PathVariable("currentUserUsername") String username){
+        Boolean isFriend = friendService.checkToFriends(friendId,username);
         return new ResponseEntity<>(isFriend,HttpStatus.OK);
 
     }
 
-    private User getUserByPrincipal(Principal principal) {
-        String username = principal.getName();
-        return userRepository.findUserByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Username not found with username " + username));
-    }
 }

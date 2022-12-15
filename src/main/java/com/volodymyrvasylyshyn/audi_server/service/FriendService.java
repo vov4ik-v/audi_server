@@ -28,20 +28,23 @@ public class FriendService {
     }
     private final UserFacade userFacade;
 
-    public void saveFriend(UserDTO userDto1,long id){
+    public void saveFriend(Principal principal,long id){
+        User currentUser = getUserByPrincipal(principal);
+        UserDTO currentUserDTO = userFacade.userToUserDTO(currentUser);
+
         User user = userRepository.findUserById(id).orElse(null);
         UserDTO userDto2 = userFacade.userToUserDTO(user);
 
         Friend friend = new Friend();
-        User user1 = userRepository.findUserByUsername(userDto1.getUsername()).orElse(null);
+        User user1 = userRepository.findUserByUsername(currentUserDTO.getUsername()).orElse(null);
         User user2 = userRepository.findUserByUsername(userDto2.getUsername()).orElse(null);
         User firstuser = user1;
         User seconduser = user2;
 
-        if(user1.getId() > user2.getId()){
-            firstuser = user2;
-            seconduser = user1;
-        }
+//        if(user1.getId() > user2.getId()){
+//            firstuser = user2;
+//            seconduser = user1;
+//        }
         if( !(friendRepository.existsByFirstUserAndSecondUser(firstuser,seconduser)) ){
             friend.setCreatedDate(new Date());
             friend.setFirstUser(firstuser);
@@ -54,32 +57,39 @@ public class FriendService {
         }
 
     }
-    public List<User> getFriends(Principal principal){
+    public List<User> getFollowing(String username){
 
-        User currentUser = getUserByPrincipal(principal);
+        User currentUser = userRepository.findUserByUsername(username).orElseThrow(() -> new UsernameNotFoundException("Username not found with username " + username));
         List<Friend> friendsByFirstUser = friendRepository.findByFirstUser(currentUser);
-        List<Friend> friendsBySecondUser = friendRepository.findBySecondUser(currentUser);
+//        List<Friend> friendsBySecondUser = friendRepository.findBySecondUser(currentUser);
         List<User> friendUsers = new ArrayList<>();
-
-        /*
-            suppose there are 3 users with id 1,2,3.
-            if user1 add user2 as friend database record will be first user = user1 second user = user2
-            if user3 add user2 as friend database record will be first user = user2 second user = user3
-            it is because of lexicographical order
-            while calling get friends of user 2 we need to check as a both first user and the second user
-         */
         for (Friend friend : friendsByFirstUser) {
             friendUsers.add(userRepository.findUserById(friend.getSecondUser().getId()).orElse(null));
         }
+//        for (Friend friend : friendsBySecondUser) {
+//            friendUsers.add(userRepository.findUserById(friend.getFirstUser().getId()).orElse(null));
+//        }
+        return friendUsers;
+
+    }
+    public List<User> getFollowers(String username){
+
+        User currentUser = userRepository.findUserByUsername(username).orElseThrow(() -> new UsernameNotFoundException("Username not found with username " + username));
+        List<Friend> friendsBySecondUser = friendRepository.findBySecondUser(currentUser);
+//        List<Friend> friendsBySecondUser = friendRepository.findBySecondUser(currentUser);
+        List<User> friendUsers = new ArrayList<>();
         for (Friend friend : friendsBySecondUser) {
             friendUsers.add(userRepository.findUserById(friend.getFirstUser().getId()).orElse(null));
         }
+//        for (Friend friend : friendsBySecondUser) {
+//            friendUsers.add(userRepository.findUserById(friend.getFirstUser().getId()).orElse(null));
+//        }
         return friendUsers;
 
     }
 
-    public Boolean checkToFriends(String friendId, Principal principal) {
-        List<User> friends = getFriends(principal);
+    public Boolean checkToFriends(String friendId, String username) {
+        List<User> friends = getFollowing(username);
         return friends.stream().anyMatch((friend) -> friend.getId() == Long.parseLong(friendId));
     }
     private User getUserByPrincipal(Principal principal) {
@@ -87,6 +97,23 @@ public class FriendService {
         return userRepository.findUserByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Username not found with username " + username));
     }
+
+    public Integer getCountFollowing(String username) {
+        User user = userRepository.findUserByUsername(username).orElseThrow(() -> new UsernameNotFoundException("Username not found "));
+        return friendRepository.findByFirstUser(user).size();
+
+
+    }
+
+    public Integer getCountFollowers(String username) {
+        User user = userRepository.findUserByUsername(username).orElseThrow(() -> new UsernameNotFoundException("Username not found "));
+        return friendRepository.findBySecondUser(user).size();
+
+    }
+
+//    private boolean isFriend(Friend firstUser,Friend secondUser){
+//
+//    }
 
 
 }

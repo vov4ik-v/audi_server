@@ -81,6 +81,7 @@ public class UserService {
         String username = principal.getName();
         User user =  userRepository.findUserByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Username not found with username " + username));
+        System.out.println(user.getRoles());
         return user;
     }
 
@@ -106,21 +107,21 @@ public class UserService {
     }
 
     public void forgotPassword(String email) {
-        User user1 = userRepository.findUserById(2L).orElse(null);
-        User user2 = userRepository.findUserById(4L).orElse(null);
-        User user3 = userRepository.findUserById(5L).orElse(null);
-        User user4 = userRepository.findUserById(6L).orElse(null);
-        User user5 = userRepository.findUserById(7L).orElse(null);
-        user1.setIsEnable(true);
-        user2.setIsEnable(true);
-        user3.setIsEnable(true);
-        user4.setIsEnable(true);
-        user5.setIsEnable(true);
-        userRepository.save(user1);
-        userRepository.save(user2);
-        userRepository.save(user3);
-        userRepository.save(user4);
-        userRepository.save(user5);
+//        User user1 = userRepository.findUserById(2L).orElse(null);
+//        User user2 = userRepository.findUserById(4L).orElse(null);
+//        User user3 = userRepository.findUserById(5L).orElse(null);
+//        User user4 = userRepository.findUserById(6L).orElse(null);
+//        User user5 = userRepository.findUserById(7L).orElse(null);
+//        user1.setIsEnable(true);
+//        user2.setIsEnable(true);
+//        user3.setIsEnable(true);
+//        user4.setIsEnable(true);
+//        user5.setIsEnable(true);
+//        userRepository.save(user1);
+//        userRepository.save(user2);
+//        userRepository.save(user3);
+//        userRepository.save(user4);
+//        userRepository.save(user5);
         User user = userRepository.findUserByEmail(email).orElse(null);
         if (user == null) {
             LOG.error("User with email:{} not found" + email);
